@@ -58,3 +58,4 @@ jobs:
           context: ./http
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-simple-api-httpd:latest
           push: ${{ github.ref == 'refs/heads/master' }}
+          
