@@ -379,16 +379,15 @@ docker exec -it my-httpd-container cat /usr/local/apache2/conf/httpd.conf
 Add the following configuration in  /usr/local/apache2/conf/httpd.conf to enable reverse proxy:
 
 ```apache
-ServerName localhost
 
 <VirtualHost *:80>
-    ProxyPreserveHost On
-    ProxyPass / http://YOUR_BACKEND_LINK:8080/
-    ProxyPassReverse / http://YOUR_BACKEND_LINK:8080/
+ProxyPreserveHost On
+ProxyPass / http://simple-api-container-student:8080/
+ProxyPassReverse / http://simple-api-container-student:8080/
 </VirtualHost>
-
 LoadModule proxy_module modules/mod_proxy.so
 LoadModule proxy_http_module modules/mod_proxy_http.so
+
 ```
 
 **3. Update the Dockerfile to include the modified configuration:**
