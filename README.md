@@ -975,3 +975,667 @@ By following these steps, you have configured a CI/CD pipeline that:
 - Builds and pushes Docker images to Docker Hub on commits to the `main` branch.
 - Integrates SonarCloud for code quality analysis, ensuring a maintainable and secure codebase.
 
+## TD3
+
+## Introduction
+
+This guide will walk you through the installation and configuration of Ansible on a machine running Windows Linux Subsystem (WSL). You will learn how to use Ansible to manage and provision servers, as well as run simple commands to check the connectivity and configuration of your server.
+
+## Prerequisites
+
+1. **Windows Linux Subsystem (WSL)**: Ensure that WSL is installed and configured on your Windows machine.
+2. **Ansible**: We will install Ansible in WSL.
+3. **SSH Private Key**: You will need your private key to connect to your remote server.
+
+## Installation and Configuration Steps
+
+### 1. Install Ansible
+
+Start by installing Ansible in your WSL environment:
+
+```sh
+pip3 install ansible
+```
+
+### 2. Verify Ansible Installation
+
+Verify the installation by displaying the Ansible version:
+
+```sh
+ansible --version
+```
+
+### 3. Configure Private Key Permissions
+
+To use your private key, you need to restrict its permissions:
+
+```sh
+chmod 400 '/mnt/c/Users/Dell/OneDrive - Fondation EPF/documents/4a semestre 2 EPF/Devops/id_rsa'
+```
+
+### 4. Connect to the Remote Server via SSH
+
+Connect to your remote server using SSH and the private key:
+
+```sh
+cd ~/.ssh
+sudo chmod 400 id_rsa
+ssh -i id_rsa centos@justine.sammut.takima.cloud
+```
+
+After verifying the connection, you can exit the SSH session:
+
+```sh
+exit
+```
+
+### 5. Update and Install Packages on the Remote Server
+
+Once connected to your server, update the packages and install the necessary tools:
+
+```sh
+sudo yum update
+sudo yum install vim -y
+sudo yum install epel-release
+sudo yum install ansible
+```
+
+### 6. Configure Ansible Hosts
+
+Back in your WSL environment, create and edit the Ansible hosts file:
+
+```sh
+sudo vim /etc/ansible/hosts
+```
+
+Add your server to the `/etc/ansible/hosts` file:
+
+```sh
+justine.sammut.takima.cloud
+```
+
+### 7. Test Configuration with Ansible Ping Command
+
+Test the connection and Ansible configuration with the following command:
+
+```sh
+ansible all -m ping --private-key=~/.ssh/id_rsa -u centos
+```
+
+You should receive a response like:
+
+```json
+justine.sammut.takima.cloud | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+```
+
+## TP3
+
+## Introduction
+
+This guide will walk you through setting up a project-specific inventory for Ansible and executing some basic commands to interact with your remote server. You will learn how to create the necessary directories and files, configure your inventory, and use Ansible modules to gather information and manage your server.
+
+## Prerequisites
+
+1. **Windows Linux Subsystem (WSL)**: Ensure that WSL is installed and configured on your Windows machine.
+2. **Ansible**: We will install Ansible in WSL.
+3. **SSH Private Key**: You will need your private key to connect to your remote server.
+
+## Steps
+
+### 1. Create Project Directories and Files
+
+Start by creating the required directories and files for your Ansible project:
+
+```sh
+mkdir -p /mnt/c/Users/Dell/OneDrive\ -\ Fondation\ EPF/documents/4a\ semestre\ 2\ EPF/Devops/my-project/ansible/inventories
+```
+
+Navigate to your project directory:
+
+```sh
+cd /mnt/c/Users/Dell/OneDrive\ -\ Fondation\ EPF/documents/4a\ semestre\ 2\ EPF/Devops/my-project
+```
+
+Create the `ansible` directory:
+
+```sh
+mkdir ansible
+cd ansible
+```
+
+Create the `inventories` directory:
+
+```sh
+mkdir inventories
+cd inventories
+```
+
+Create the `setup.yml` file:
+
+```sh
+touch setup.yml
+```
+
+### 2. Configure the Inventory
+
+Edit the `setup.yml` file and add the following configuration:
+
+```yaml
+all:
+  vars:
+    ansible_user: centos
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+  children:
+    prod:
+      hosts: justine.sammut.takima.cloud
+```
+
+### 3. Test the Inventory with the Ping Command
+
+Use the `ping` module to test the connectivity with your server:
+
+```sh
+ansible all -i inventories/setup.yml -m ping
+```
+
+Expected output:
+
+```json
+justine.sammut.takima.cloud | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+```
+
+### 4. Gather Facts About the Host
+
+Use the `setup` module to gather information about your host:
+
+```sh
+ansible all -i inventories/setup.yml -m setup -a "filter=ansible_distribution*"
+```
+
+Expected output:
+
+```json
+justine.sammut.takima.cloud | SUCCESS => {
+    "ansible_facts": {
+        "ansible_distribution": "CentOS",
+        "ansible_distribution_file_parsed": true,
+        "ansible_distribution_file_path": "/etc/redhat-release",
+        "ansible_distribution_file_variety": "RedHat",
+        "ansible_distribution_major_version": "7",
+        "ansible_distribution_release": "Core",
+        "ansible_distribution_version": "7.9",
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false
+}
+```
+
+
+
+## Steps
+
+### 1. Create a Basic Playbook
+
+Start by creating a simple playbook to test the connection to your server.
+
+Create the `playbook.yml` file:
+
+```sh
+cd /mnt/c/Users/Dell/OneDrive\ -\ Fondation\ EPF/documents/4a\ semestre\ 2\ EPF/Devops/my-project/ansible
+touch playbook.yml
+```
+
+Edit the `playbook.yml` file and add the following content:
+
+```yaml
+- hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+   - name: Test connection
+     ping:
+```
+
+Execute the playbook:
+
+```sh
+ansible-playbook -i inventories/setup.yml playbook.yml
+```
+
+Expected output:
+
+```plaintext
+PLAY [all] **************************************************************************************************************************
+
+TASK [Test connection] **************************************************************************************************************
+ok: [justine.sammut.takima.cloud]
+
+PLAY RECAP **************************************************************************************************************************
+justine.sammut.takima.cloud : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+```
+
+### 2. Create an Advanced Playbook to Install Docker
+
+Edit the `playbook.yml` file to install Docker on your server:
+
+```sh
+nano playbook.yml
+```
+
+Replace the existing content with:
+
+```yaml
+- hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Install device-mapper-persistent-data
+      yum:
+        name: device-mapper-persistent-data
+        state: latest
+
+    - name: Install lvm2
+      yum:
+        name: lvm2
+        state: latest
+
+    - name: Add Docker repository
+      command:
+        cmd: sudo yum-config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+    - name: Install Docker
+      yum:
+        name: docker-ce
+        state: present
+
+    - name: Install python3
+      yum:
+        name: python3
+        state: present
+
+    - name: Install Docker with Python 3
+      pip:
+        name: docker
+        executable: pip3
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
+
+    - name: Make sure Docker is running
+      service:
+        name: docker
+        state: started
+      tags: docker
+```
+
+Execute the playbook:
+
+```sh
+ansible-playbook -i inventories/setup.yml playbook.yml
+```
+
+Expected output:
+
+```plaintext
+PLAY [all] **************************************************************************************************************************
+
+TASK [Install device-mapper-persistent-data] ****************************************************************************************
+changed: [justine.sammut.takima.cloud]
+
+TASK [Install lvm2] *****************************************************************************************************************
+changed: [justine.sammut.takima.cloud]
+
+TASK [Add Docker repository] ********************************************************************************************************
+changed: [justine.sammut.takima.cloud]
+
+TASK [Install Docker] ***************************************************************************************************************
+changed: [justine.sammut.takima.cloud]
+
+TASK [Install python3] **************************************************************************************************************
+changed: [justine.sammut.takima.cloud]
+
+TASK [Install Docker with Python 3] *************************************************************************************************
+changed: [justine.sammut.takima.cloud]
+
+TASK [Make sure Docker is running] **************************************************************************************************
+changed: [justine.sammut.takima.cloud]
+
+PLAY RECAP **************************************************************************************************************************
+justine.sammut.takima.cloud : ok=7    changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+```
+
+### 3. Refactor Using Roles
+
+Create a Docker role for cleaner task management:
+
+```sh
+ansible-galaxy init roles/docker
+```
+
+Move the Docker installation tasks to the role:
+
+Edit the `tasks/main.yml` file in the `roles/docker` directory and add the following content:
+
+```yaml
+---
+# tasks file for roles/docker
+
+- name: Install device-mapper-persistent-data
+  yum:
+    name: device-mapper-persistent-data
+    state: latest
+
+- name: Install lvm2
+  yum:
+    name: lvm2
+    state: latest
+
+- name: Add Docker repository
+  command:
+    cmd: sudo yum-config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+- name: Install Docker
+  yum:
+    name: docker-ce
+    state: present
+
+- name: Install python3
+  yum:
+    name: python3
+    state: present
+
+- name: Install Docker with Python 3
+  pip:
+    name: docker
+    executable: pip3
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+- name: Make sure Docker is running
+  service:
+    name: docker
+    state: started
+  tags: docker
+```
+
+Edit the `handlers/main.yml` file in the `roles/docker` directory and add the following content:
+
+```yaml
+---
+# handlers file for roles/docker
+
+- name: Restart Docker
+  systemd:
+    name: docker
+    state: restarted
+    enabled: yes
+```
+
+### 4. Update Playbook to Use Role
+
+Edit the `playbook.yml` file to use the Docker role:
+
+```yaml
+- hosts: all
+  gather_facts: false
+  become: true
+
+  roles:
+    - role: docker
+```
+
+Execute the playbook to apply the role:
+
+```sh
+ansible-playbook -i inventories/setup.yml playbook.yml
+```
+
+## Conclusion
+
+You have now successfully created and executed both simple and advanced Ansible playbooks, tested server connectivity, installed Docker, and refactored your tasks into roles for better organization. This setup will help you efficiently manage and provision your servers using Ansible.
+
+
+# Documentation for Deploying Your Dockerized Application with Ansible
+
+## Introduction
+
+This guide walks through the steps to deploy a dockerized application using Ansible. We will create specific roles to handle different parts of the deployment process, including installing Docker, creating a network, launching the database, the application, and the proxy. Each part will use the `docker_container` module to start the respective Docker containers.
+
+## Roles Overview
+
+- **Install Docker**: Install Docker on the managed server.
+- **Create Network**: Create a Docker network for the containers to communicate.
+- **Launch Database**: Pull and run the database container.
+- **Launch App**: Pull and run the application container.
+- **Launch Proxy**: Pull and run the proxy container.
+
+## Creating the Roles
+
+1. **Create the roles using `ansible-galaxy`:**
+
+```sh
+ansible-galaxy init roles/network
+ansible-galaxy init roles/database
+ansible-galaxy init roles/launch_app
+ansible-galaxy init roles/launch_proxy
+```
+
+## Playbook Structure
+
+### Playbook
+
+The main playbook, `playbook.yml`, which includes all the roles:
+
+```yaml
+- hosts: all
+  gather_facts: false
+  become: true
+
+  roles:
+    - docker
+    - network
+    - database
+    - launch_app
+    - launch_proxy
+```
+
+### Role: Docker
+
+**Tasks file (`roles/docker/tasks/main.yml`):**
+
+```yaml
+---
+# tasks file for roles/docker
+
+- name: Install device-mapper-persistent-data
+  yum:
+    name: device-mapper-persistent-data
+    state: latest
+
+- name: Install lvm2
+  yum:
+    name: lvm2
+    state: latest
+
+- name: add repo docker
+  command:
+    cmd: sudo yum-config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+- name: Install Docker
+  yum:
+    name: docker-ce
+    state: present
+
+- name: Install python3
+  yum:
+    name: python3
+    state: present
+
+- name: Install docker with Python 3
+  pip:
+    name: docker
+    executable: pip3
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+- name: Make sure Docker is running
+  service:
+    name: docker
+    state: started
+  tags: docker
+
+- name: Log in to Docker Hub
+  docker_login:
+    username: justinesmmt
+    password: 9Xdqn4A55jj,,Ai
+    reauthorize: yes
+```
+
+### Role: Network
+
+**Tasks file (`roles/network/tasks/main.yml`):**
+
+```yaml
+---
+# tasks file for roles/network
+
+- name: Create a network
+  community.docker.docker_network:
+    name: app-network
+```
+
+### Role: Database
+
+**Tasks file (`roles/database/tasks/main.yml`):**
+
+```yaml
+---
+# tasks file for roles/database
+
+- name: Pull the BDD image
+  docker_image:
+    name: justinesmmt/tp-devops-simple-api-database
+    tag: latest
+    source: pull
+
+- name: Run BDD
+  docker_container:
+    state: started
+    name: mypostgres
+    image: justinesmmt/tp-devops-simple-api-database
+    networks: 
+      - name: "app-network"
+```
+
+### Role: Launch App
+
+**Tasks file (`roles/launch_app/tasks/main.yml`):**
+
+```yaml
+---
+# tasks file for roles/launch_app
+
+- name: Pull the API Image
+  docker_image:
+    name: justinesmmt/tp-devops-simple-api-backend
+    tag: latest
+    source: pull
+
+- name: Run API
+  docker_container:
+    name: simple-api-container-student2
+    image: justinesmmt/tp-devops-simple-api-backend:latest
+    networks: 
+      - name: "app-network"
+    state: started
+```
+
+### Role: Launch Proxy
+
+**Tasks file (`roles/launch_proxy/tasks/main.yml`):**
+
+```yaml
+---
+# tasks file for roles/launch_proxy
+
+- name: Pull the proxy container
+  docker_image:
+    name: justinesmmt/tp-devops-simple-api-httpd
+    tag: latest
+    source: pull
+ 
+- name: Run the proxy container
+  docker_container:
+    name: httpd-1
+    image: justinesmmt/tp-devops-simple-api-httpd
+    ports:
+      - "80:80"
+    networks:
+      - name: "app-network"
+```
+
+## Executing the Playbook
+
+Run the playbook to deploy the application:
+
+```sh
+ansible-playbook -i inventories/setup.yml playbook.yml
+```
+
+### Verifying the Deployment
+
+Once the playbook runs successfully, verify the deployment by accessing the API endpoints:
+
+- Check the base endpoint:
+
+  ```sh
+  http://justine.sammut.takima.cloud
+  ```
+
+  Expected response:
+
+  ```json
+  {
+    "id": 4,
+    "content": "Hello, World!"
+  }
+  ```
+
+- Check the departments endpoint:
+
+  ```sh
+  http://justine.sammut.takima.cloud/departments/IRC/students
+  ```
+
+  Expected response:
+
+  ```json
+  [
+    {
+      "id": 1,
+      "firstname": "Eli",
+      "lastname": "Copter",
+      "department": {
+        "id": 1,
+        "name": "IRC"
+      }
+    }
+  ]
+  ```
+
+## Conclusion
+
+You have now successfully set up and deployed your dockerized application using Ansible. This guide covers the creation of roles, configuring tasks for Docker, and running the playbook to deploy the application on a managed server. This structured approach ensures a clean and maintainable deployment process.
